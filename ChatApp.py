@@ -9,7 +9,9 @@ import wavio as wv
 import time # untuk waktu
 
 import numpy as np # untuk fix waktu play voice yang lebih dari panjang aslinya
-import datetime #untuk waktu atua hari
+import datetime #untuk waktu atau hari
+
+from scipy.io import wavfile #untuk play sound yg telah dikirim
 
 # frekuensi
 freq = 44100 #N = 44100*5
@@ -28,11 +30,13 @@ class App(ctk.CTk):
         self.list_chat=[]
         self.list_frames=[]
         self.list_labels_info=[]
+        self.list_rec={}
 
         #variabel waktu untuk suara
         self.time1=0
         self.time2=0
 
+        self.index_rec=-1
         self.timeNow=0
 
         #variabel agar slider bisa stop saat pause
@@ -137,6 +141,14 @@ class App(ctk.CTk):
         self.load_chats(self.list_persons)
         self.init_chat(None,self.index_chat,self.list_chat[self.index_chat])#,e,index,list_chat
 
+
+        #variables of chat record
+        self.playing_chat=0
+        self.stopped_chat=0
+        self.Exactduration_chat=0
+        self.duration_chat=0
+
+
     #fungsi logout
     def bt_logout_com(self):
         pass
@@ -164,11 +176,47 @@ class App(ctk.CTk):
                 self.frame_text.grid(row=0,column=0)
 
                 self.lbl_text=ctk.CTkLabel(self.frame_text, text=ent_user,font=('Helvetica',14)) #settingan kirim pesan
-                self.lbl_text.pack(padx=10,pady=5)
+                self.lbl_text.grid(row=0,column=0,padx=10,pady=5,sticky='w')
 
                 self.list_frames.append(self.bsk_frame)
-                self.list_labels_info[self.index_chat].configure(text=ent_user)
-                self.list_chat[self.index_chat].append({'M':ent_user})
+                
+
+                self.lower_frame = ctk.CTkFrame(self.frame_text,fg_color='transparent',corner_radius=20)
+                self.lower_frame.grid(row=1,column=0,pady=2,padx=7,sticky='nswe')
+
+                self.lower_frame.grid_rowconfigure(0, weight=0)
+
+                self.lower_frame.grid_columnconfigure(0, weight=0)
+
+                self.lower_frame.grid_columnconfigure(1, weight=1)
+
+                timeNow = datetime.datetime.now()
+                hour = timeNow.hour
+                AM_PM = ' AM'
+                if hour>=12:
+                    AM_PM = ' PM'
+                    if hour>12:
+                        hour-=12
+                hour = str(hour)
+                minute = str(timeNow.minute)
+                if len(hour)==1:
+                    hour='0'+hour
+                if len(minute)==1:
+                    minute='0'+minute
+                timeNowStr = hour + ':'+ minute + AM_PM
+
+                self.lbl_time = ctk.CTkLabel(self.lower_frame,text=timeNowStr,font=('Helvetica',11))
+                self.lbl_time.grid(row=0,column=1,sticky='w',padx=5)
+
+                
+                self.lbl_seen = ctk.CTkLabel(self.lower_frame,text='.',text_color='red')
+                self.lbl_seen.grid(row=0,column=0)
+
+                self.list_labels_info[self.index_chat][0].configure(text=ent_user)
+                self.list_labels_info[self.index_chat][1].configure(text=timeNowStr)
+
+                self.list_chat[self.index_chat].append({'M':ent_user,'R':False,'seen':False,'time':timeNowStr})
+
             else:
                 self.time1=time.time()
                 t1 = Thread(target=self.record_fcn) #rekam suara
@@ -185,7 +233,7 @@ class App(ctk.CTk):
             sd.stop() #stop rekam
             self.timeNow=datetime.datetime.now()
             #print(self.recording1)
-            wv.write(f"{self.timeNow.year-self.timeNow.month-self.timeNow.day-self.timeNow.hour-self.timeNow.minute-self.timeNow.second}.wav", self.recording1[0:int(self.Exactduration*freq)], freq, sampwidth=2) #menyimpan hasil rekam menjadi file wav
+            wv.write(f"{self.timeNow.year}-{self.timeNow.month}-{self.timeNow.day}-{self.timeNow.hour}-{self.timeNow.minute}-{self.timeNow.second}.wav", self.recording1[0:int(self.Exactduration*freq)], freq, sampwidth=2) #menyimpan hasil rekam menjadi file wav
             self.bt_send.configure(text='Send/Rec',fg_color='#25D366',hover_color='#1DA851') #ngubah tombol stop menjadi send/rec lagi
             self.index_mode=2 #mode stop
             self.bt_play = ctk.CTkButton(self.recFrame,text='▶',width=30,command=self.bt_Play_com,fg_color="#25D366") #tombol play suara
@@ -213,13 +261,13 @@ class App(ctk.CTk):
 
     def bt_send_rec_com(self):
         self.bsk_frame =ctk.CTkFrame(self.chatFrame,fg_color='transparent')
-        self.bsk_frame.grid(row=len(self.list_frames),column=0,sticky='e')
+        self.bsk_frame.grid(row=len(self.list_frames),column=0,sticky='e',ipady=5)
 
         self.bsk_frame.grid_columnconfigure((0,1), weight=0)
         self.bsk_frame.grid_rowconfigure(0, weight=1)
 
         self.ch = ctk.CTkLabel(self.bsk_frame, text=self.my_name[0],font=('Helvetica',20,'bold'),height=30,width=30,fg_color='#037562',text_color='white',corner_radius=5)
-        self.ch.grid(row=0,column=1,padx=10,pady=10)
+        self.ch.grid(row=0,column=1,padx=10,pady=10,sticky='n')
 
         self.frame_rec = ctk.CTkFrame(self.bsk_frame,corner_radius=15,height=30,fg_color='white')
         self.frame_rec.grid(row=0,column=0)
@@ -228,43 +276,101 @@ class App(ctk.CTk):
         self.frame_rec.grid_columnconfigure((0,2), weight=0)
         self.frame_rec.grid_columnconfigure(1, weight=1)
         
-        self.bt_play_chat = ctk.CTkButton(self.frame_rec,text='▶',width=30,fg_color="#25D366") #tombol play suara
+        self.bt_play_chat = ctk.CTkButton(self.frame_rec,text='▶',width=30,fg_color="#25D366",command=lambda a=len(self.list_frames): self.bt_Play_chat_com(a)) #tombol play suara
         self.bt_play_chat.grid(row=0,column=0,padx=5,pady=10) #frame play
 
-        self.slider_rec_chat = ctk.CTkSlider(self.frame_rec,width=100,button_color='#037562') #slider rekaman suara
+        self.slider_rec_chat = ctk.CTkSlider(self.frame_rec,button_color='#037562',command=lambda val, ind=len(self.list_frames):self.slider_chat_com(val,ind)) #slider rekaman suara
         self.slider_rec_chat.grid(row=0,column=1,sticky='we',padx=5,pady=10) #slider grid rekaman suara
         self.slider_rec_chat.set(0)
 
-        self.lbl_time_chat = ctk.CTkLabel(self.frame_rec,text="00:00")
+        self.lbl_time_chat = ctk.CTkLabel(self.frame_rec,text="00:00|"+self.time_format(int(np.ceil(self.Exactduration))))
         self.lbl_time_chat.grid(row=0,column=2,padx=5,pady=10)
 
+        self.list_rec[len(self.list_frames)]=[self.bt_play_chat,self.slider_rec_chat,self.lbl_time_chat]
+        
         self.list_frames.append(self.bsk_frame)
-        self.list_chat[self.index_chat].append({'M':f"{self.timeNow.year-self.timeNow.month-self.timeNow.day-self.timeNow.hour-self.timeNow.minute-self.timeNow.second}.wav",'R':True})
+
+        self.lower_frame = ctk.CTkFrame(self.frame_rec,fg_color='transparent',corner_radius=20)
+        self.lower_frame.grid(row=1,column=0,columnspan=3,pady=2,padx=7,sticky='nswe')
+
+        self.lower_frame.grid_rowconfigure(0, weight=0)
+
+        self.lower_frame.grid_columnconfigure(0, weight=0)
+
+        self.lower_frame.grid_columnconfigure(1, weight=1)
+
+        timeNow = datetime.datetime.now()
+        hour = timeNow.hour
+        AM_PM = ' AM'
+        if hour>=12:
+            AM_PM = ' PM'
+            if hour>12:
+                hour-=12
+        hour = str(hour)
+        minute = str(timeNow.minute)
+        if len(hour)==1:
+            hour='0'+hour
+        if len(minute)==1:
+            minute='0'+minute
+        timeNowStr = hour + ':'+ minute + AM_PM
+
+        self.lbl_time = ctk.CTkLabel(self.lower_frame,text=timeNowStr,font=('Helvetica',11),text_color='gray')
+        self.lbl_time.grid(row=0,column=1,sticky='w',padx=5)
+
+        self.list_labels_info[self.index_chat][0].configure(text='🔊 Pesan Suara')
+        self.list_labels_info[self.index_chat][1].configure(text=timeNowStr)
+
+
+        
+        self.lbl_seen = ctk.CTkLabel(self.lower_frame,text='.',text_color='red')
+        self.lbl_seen.grid(row=0,column=0)
+
+
+
+
+
+
+
+        self.list_chat[self.index_chat].append({'M':f"{self.timeNow.year}-{self.timeNow.month}-{self.timeNow.day}-{self.timeNow.hour}-{self.timeNow.minute}-{self.timeNow.second}.wav",'R':True,'seen':False,'time':timeNowStr})
 
         self.exit_rec()
-
-
     def slider_com(self,value):
-        self.bt_Play_com
+        self.bt_Play_com()
     def bt_Play_com(self):
-        if self.playing==0:
-            self.bt_play.configure(text='⏸')
-            sd.play(self.recording1[int(self.slider_rec.get()*self.Exactduration*freq):int(self.Exactduration*freq)],freq)
-            self.duration = int(self.slider_rec.get()*self.Exactduration)
-            t1 = Thread(target=self.duration_func)
-            t1.start()
-            self.playing=1
+        if self.playing_chat==0:
+            if self.playing==0:
+                self.stopped=0
+                self.bt_play.configure(text='⏸')
+                sd.play(self.recording1[int(self.slider_rec.get()*self.Exactduration*freq):int(self.Exactduration*freq)],freq)
+                self.duration = int(self.slider_rec.get()*self.Exactduration)
+                t1 = Thread(target=self.duration_func)
+                t1.start()
+                self.playing=1
+            else:
+                self.bt_play.configure(state='disabled')
+                self.slider_rec.configure(state='disabled')
+                self.bt_play.configure(text='▶')
+                sd.stop()
+                self.playing=0
+                self.stopped=1
         else:
-            self.bt_play.configure(text='▶')
+            self.playing_chat=0
+            self.list_rec[self.index_rec][0].configure(state='disabled')
+            self.list_rec[self.index_rec][1].configure(state='disabled')
+            self.list_rec[self.index_rec][0].configure(text='▶')
             sd.stop()
-            self.playing=0
-            self.stopped=1
+            self.stopped_chat=1
+
+            while( self.list_rec[self.index_rec][0].cget('state')!='normal'):
+                pass
+            self.bt_Play_com()
+
 
 
     def duration_func(self):
         while(self.duration<self.Exactduration and self.stopped==0):
             self.duration += 1
-            self.lbl_time.configure(text=self.time_format(self.duration)+'|'+self.time_format(int(np.ceil(self.Exactduration))))
+            self.lbl_time.configure(text=self.time_format(self.duration)+'|'+self.time_format(int(np.ceil(self.Exactduration))))#contoh 01:10|2:00
             self.slider_rec.set(self.duration/self.Exactduration)
             time.sleep(1)
         if self.stopped==0:
@@ -275,6 +381,8 @@ class App(ctk.CTk):
             self.lbl_time.configure(text="00:00|"+self.time_format(int(np.ceil(self.Exactduration))))
         else:
             self.stopped=0
+            self.bt_play.configure(state='normal')
+            self.slider_rec.configure(state='normal')
 
     def time_format(self,sec): # jika 70
         minutes = str(int(sec/60)) #jadi 01
@@ -304,13 +412,25 @@ class App(ctk.CTk):
             }
         ]
         self.list_chat=[
-            [{'H':'Bang, aku sebenarnya suka sama elisa, tapi jgn ksih tau sp2','R':False},{'M':'Aman bangg','R':False},{'H':'pas matkul jarkom, aku mau confess ke dia','R':False},{'M':'anjayy goodluck bang','R':False}],
-            [{'H':'Bang tolong aku diculik ambatron','R':False},{'M':'dimana bang? biar ku telpon rusdi','R':False},{'H':'di TA 10.5 bang, cepat bang tolong aku','R':False},{'M':'iya iya sabar bang, rusdi lagi otw','R':False}]
-        ] # 'R':False disini berarti ini bukanlah record(rekaman suara), ini dibuat gini biar bisa kirim pesan suara
+            [{'H':'Bang, aku sebenarnya suka sama elisa, tapi jgn ksih tau sp2','R':False, 'time':'8:26 PM','seen':True},
+             {'M':'Aman bangg','R':False, 'time':'8:27 PM','seen':True},
+             {'H':'pas matkul jarkom, aku mau confess ke dia','R':False, 'time':'8:29 PM','seen':True},
+             {'M':'anjayy goodluck bang','R':False, 'time':'8:29 PM','seen':True},
+             {'H':r'C:\Users\AU\Desktop\2024-5-28-15-10-45.wav','R':'True', 'time':'8:35 PM','seen':True}],
+
+            [{'H':'Bang tolong aku diculik ambatron','R':False, 'time':'2:21 AM','seen':True},
+             {'M':'dimana bang? biar ku telpon rusdi','R':False, 'time':'2:22 AM','seen':True},
+             {'H':'di TA 10.5 bang, cepat bang tolong aku','R':False, 'time':'2:26 AM','seen':True},
+             {'M':'iya iya sabar bang, rusdi lagi otw','R':False, 'time':'2:31 AM','seen':True}]
+        ] # 'R':False disini berarti ini bukan record(rekaman suara), ini dibuat gini biar bisa kirim pesan suara
 
     #Fungsi untuk menampilkan orang yang ingin dichat (bagian kiri)
     def load_chats(self,ListPersons):
         for i in range(len(ListPersons)):
+            info = list(self.list_chat[i][-1].values())[0]
+            if list(self.list_chat[i][-1].values())[1]:
+                info='🔊 Pesan suara'
+
             self.basicFrame = ctk.CTkFrame(self.leftFrame,fg_color='transparent',height=100,corner_radius=0)
             self.basicFrame.grid(row=i,column=0,sticky='nswe',pady=5)
             self.basicFrame.bind('<Button-1>',lambda e,a=i,chat=self.list_chat[i] :self.init_chat(e,a,chat))
@@ -339,14 +459,15 @@ class App(ctk.CTk):
             self.lbl_name.grid(row=1,column=0,sticky='w')
             self.lbl_name.bind('<Button-1>',lambda e,a=i,chat=self.list_chat[i] :self.init_chat(e,a,chat))
 
-            self.lbl_Info=ctk.CTkLabel(self.frameInfo, text=list(self.list_chat[i][-1].values())[0],font=('Helvetica',14),height=5)
+            self.lbl_Info=ctk.CTkLabel(self.frameInfo, text=info,font=('Helvetica',14),height=5)
             self.lbl_Info.grid(row=2,column=0,sticky='w')
             self.lbl_Info.bind('<Button-1>',lambda e,a=i,chat=self.list_chat[i] :self.init_chat(e,a,chat))
-            self.list_labels_info.append(self.lbl_Info)
 
             self.lbl_time=ctk.CTkLabel(self.frameInfo, text=ListPersons[i]['time'],font=('Helvetica',14),height=5)
             self.lbl_time.grid(row=3,column=0,sticky='w')
             self.lbl_time.bind('<Button-1>',lambda e,a=i,chat=self.list_chat[i] :self.init_chat(e,a,chat))
+
+            self.list_labels_info.append([self.lbl_Info,self.lbl_time])
 
             self.lbl_divider = ctk.CTkFrame(self.basicFrame,fg_color='#e9edef',height=2)
             self.lbl_divider.grid(row=1,column=0,columnspan=2,sticky='nswe',pady=5,padx=5)
@@ -354,7 +475,6 @@ class App(ctk.CTk):
     #fungsi untuk menampilkan isi chat (bagian kanan)
     def init_chat(self,e,index,list_chat):
         if self.index_chat==-1 and self.index_chat!=index: #ini agar saat buka app tampilannya kosong
-
             self.ent = ctk.CTkEntry(self.footerFrame, placeholder_text='Type a message')
             self.ent.grid(row=0,column=0,sticky='nswe',padx=5,pady=10)
 
@@ -376,13 +496,16 @@ class App(ctk.CTk):
                 self.list_frames[i].grid_forget()
 
             self.list_frames=[]
+            self.list_rec={}
 
             for i in range(len(list_chat)):
                 stick='e'
+                sticky_time='w'
                 row_pos=1
                 ch=self.my_name[0]
                 color='#037562'
                 if list(list_chat[i].keys())[0]=='H':
+                    sticky_time='e'
                     stick='w'
                     row_pos=0
                     ch = self.list_persons[index]['name'][0]
@@ -400,50 +523,133 @@ class App(ctk.CTk):
                 self.frame_text = ctk.CTkFrame(self.bsk_frame,corner_radius=15,height=30,fg_color='white')
                 self.frame_text.grid(row=0,column=1-row_pos)
 
+                self.frame_text.grid_rowconfigure((0,1), weight=0)
+                self.frame_text.grid_columnconfigure(0, weight=0)
+
+                span=3
                 if list_chat[i]['R']==False:
                     self.lbl_text=ctk.CTkLabel(self.frame_text, text=list(list_chat[i].values())[0],font=('Helvetica',14)) #settingan pesan yang tersimpan
-                    self.lbl_text.pack(padx=10,pady=5)
+                    self.lbl_text.grid(row=0,column=0,padx=10,pady=5,sticky='w')
+                    span=1
                 else:
-                    self.bt_play_chat = ctk.CTkButton(self.frame_text,text='▶',width=30,fg_color="#25D366") #tombol play suara
+                    key1 = list(self.list_chat[self.index_chat][i].keys())[0]
+                    rec_path=self.list_chat[self.index_chat][i][key1] #path ke recordan suara
+
+                    freq,data=wavfile.read(rec_path)
+
+                    Exactduration_chat = len(data)/freq
+
+                    self.bt_play_chat = ctk.CTkButton(self.frame_text,text='▶',width=30,fg_color=color,command=lambda a=i:self.bt_Play_chat_com(a)) #tombol play suara
                     self.bt_play_chat.grid(row=0,column=0,padx=5,pady=10) #frame play
 
-                    self.slider_rec_chat = ctk.CTkSlider(self.frame_text,width=100,button_color='#037562') #slider rekaman suara
+                    self.slider_rec_chat = ctk.CTkSlider(self.frame_text,width=100,button_color=color,command=lambda val, ind=i:self.slider_chat_com(val,ind)) #slider rekaman suara
                     self.slider_rec_chat.grid(row=0,column=1,sticky='we',padx=5,pady=10) #slider grid rekaman suara
                     self.slider_rec_chat.set(0)
 
-                    self.lbl_time_chat = ctk.CTkLabel(self.frame_text,text="00:00")
+                    self.lbl_time_chat = ctk.CTkLabel(self.frame_text,text="00:00|"+self.time_format(int(np.ceil(Exactduration_chat))))
                     self.lbl_time_chat.grid(row=0,column=2,padx=5,pady=10)
+
+                    self.list_rec[i]=[self.bt_play_chat,self.slider_rec_chat,self.lbl_time_chat]
+                
+                self.lower_frame = ctk.CTkFrame(self.frame_text,fg_color='transparent',corner_radius=20)
+                self.lower_frame.grid(row=1,column=0,columnspan=span,pady=2,padx=7,sticky='nswe')
+
+                self.lower_frame.grid_rowconfigure(0, weight=0)
+
+                self.lower_frame.grid_columnconfigure(0, weight=0)
+
+                self.lower_frame.grid_columnconfigure(1, weight=1)
+
+                self.lbl_time = ctk.CTkLabel(self.lower_frame,text=self.list_chat[self.index_chat][i]['time'],font=('Helvetica',11),text_color='gray')
+                self.lbl_time.grid(row=0,column=1,sticky=sticky_time,padx=5)
+
+                if list(list_chat[i].keys())[0]=='M':
+                    color_seen='red'
+                    if list_chat[1]['seen']:
+                        color_seen = '#25D366'
+                    self.lbl_seen = ctk.CTkLabel(self.lower_frame,text='.',text_color=color_seen)
+                    self.lbl_seen.grid(row=0,column=0)
 
                 self.list_frames.append(self.bsk_frame)
 
+    def bt_Play_chat_com(self,index_rec):
+        if self.playing==0:
+            key1 = list(self.list_chat[self.index_chat][index_rec].keys())[0]
+            rec_path=self.list_chat[self.index_chat][index_rec][key1]#path ke recordan suara
+
+            freq,data=wavfile.read(rec_path)
+
+            self.Exactduration_chat = len(data)/freq
+
+
+            if self.playing_chat==0:
+                self.index_rec = index_rec
+                self.stopped_chat=0
+                self.list_rec[index_rec][0].configure(text='⏸')
+                sd.play(data[int(self.list_rec[index_rec][1].get()*self.Exactduration_chat*freq):int(self.Exactduration_chat*freq)],freq)
+                self.duration_chat = int(self.list_rec[index_rec][1].get()*self.Exactduration_chat)
+                t1 = Thread(target=lambda a=index_rec:self.duration_func_chat(index_rec))
+                t1.start()
+                self.playing_chat=1
+            elif self.playing_chat==1 and self.index_rec==index_rec:
+                self.list_rec[index_rec][0].configure(state='disabled')
+                self.list_rec[index_rec][1].configure(state='disabled')
+                self.list_rec[index_rec][0].configure(text='▶')
+                sd.stop()
+                self.playing_chat=0
+                self.stopped_chat=1
+            elif self.playing_chat==1 and self.index_rec!=index_rec:
+                self.list_rec[self.index_rec][0].configure(state='disabled')
+                self.list_rec[self.index_rec][1].configure(state='disabled')
+                self.list_rec[self.index_rec][0].configure(text='▶')
+                sd.stop()
+                self.stopped_chat=1
 
 
 
+                while( self.list_rec[self.index_rec][0].cget('state')!='normal'):
+                    pass
 
+                self.index_rec = index_rec
+                self.stopped_chat=0
+                self.list_rec[index_rec][0].configure(text='⏸')
+                sd.play(data[int(self.list_rec[index_rec][1].get()*self.Exactduration_chat*freq):int(self.Exactduration_chat*freq)],freq)
+                self.duration_chat = int(self.list_rec[index_rec][1].get()*self.Exactduration_chat)
+                t1 = Thread(target=lambda a=index_rec:self.duration_func_chat(index_rec))
+                t1.start()
+                self.playing_chat=1
+        else:
+            self.bt_play.configure(state='disabled')
+            self.slider_rec.configure(state='disabled')
+            self.bt_play.configure(text='▶')
+            sd.stop()
+            self.playing=0
+            self.stopped=1
 
+            while( self.bt_play.cget('state')!='normal'):
+                pass
+            
+            self.bt_Play_chat_com(index_rec)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def duration_func_chat(self,index_rec):
+        while(self.duration_chat<self.Exactduration_chat and self.stopped_chat==0):
+            self.duration_chat += 1
+            self.list_rec[index_rec][2].configure(text=self.time_format(self.duration_chat)+'|'+self.time_format(int(np.ceil(self.Exactduration_chat))))
+            self.list_rec[index_rec][1].set(self.duration_chat/self.Exactduration_chat)
+            time.sleep(1)
+        if self.stopped_chat==0:
+            self.list_rec[index_rec][0].configure(text='▶')
+            self.list_rec[index_rec][1].set(0)
+            self.duration_chat=0
+            self.playing_chat=0
+            self.list_rec[index_rec][2].configure(text="00:00|"+self.time_format(int(np.ceil(self.Exactduration_chat))))
+        else:
+            self.stopped_chat=0
+            self.list_rec[index_rec][0].configure(state='normal')
+            self.list_rec[index_rec][1].configure(state='normal')
+    
+    def slider_chat_com(self,value,index_rec):
+        self.bt_Play_chat_com(index_rec)
 
 
 
