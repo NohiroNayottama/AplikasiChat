@@ -15,22 +15,24 @@ class App(ctk.CTk):
 
         self.bind('<Return>',self.bt_send_com)
         
+        #variable list
         self.list_persons=[]
         self.list_chat=[]
         self.list_frames=[]
         self.list_labels_info=[]
-        self.list_rec={}
 
         #variabel nama dan index chat-1
         self.my_name=''
         self.index_chat=-1
 
+        #index mode
         self.index_mode=0
         ## 0 --> text
-        ## 1 --> record suara
-        ## 2 --> stop record suara
+        ## 1 --> rrencananya mau gambar
 
+        #fungsi mengambil chat
         self.get_chats_Net()
+
 
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=1)
@@ -45,7 +47,7 @@ class App(ctk.CTk):
         self.upperFrame.grid_columnconfigure((0,2,3), weight=0)
         self.upperFrame.grid_columnconfigure(1, weight=1)
 
-        #############################
+        ############################# #bagian gambar dan nama kayak 'R Richky sachet'
         self.ch = ctk.CTkLabel(self.upperFrame, text=self.my_name[0],font=('Helvetica',20,'bold'),height=30,width=30,fg_color='#037562',text_color='white',corner_radius=5)
         self.ch.grid(row=0,column=3,padx=10,pady=10)
         self.lbl_text=ctk.CTkLabel(self.upperFrame, text=self.my_name,font=('Helvetica',16,'bold'))
@@ -74,7 +76,7 @@ class App(ctk.CTk):
         self.rightFrame.grid_rowconfigure((0,2,3), weight=0)
         self.rightFrame.grid_rowconfigure(1, weight=1)
 
-        #bagian nama penerima chat
+        #bagian nama lawan chat
         self.headerFrame = ctk.CTkFrame(self.rightFrame,corner_radius=0,fg_color='#f0f2f5',height=0)
         self.headerFrame.grid(row=0,column=0,sticky='nswe')
 
@@ -85,7 +87,8 @@ class App(ctk.CTk):
         #self.lblChatName = ctk.CTkLabel(self.headerFrame,text='Nohiro',font=('Helvetica',20,'bold'))
         #self.lblChatName.grid(row=0,column=0,sticky='w',padx=10,pady=5)
 
-        self.chatFrame = ctk.CTkScrollableFrame(self.rightFrame,corner_radius=0,fg_color='#efeae2') #wallpaper
+        #Background
+        self.chatFrame = ctk.CTkScrollableFrame(self.rightFrame,corner_radius=0,fg_color='#efeae2')
         self.chatFrame.grid(row=1,column=0,sticky='nswe')
         self.chatFrame.grid_columnconfigure(0, weight=1)
 
@@ -129,13 +132,11 @@ class App(ctk.CTk):
 
                 self.lower_frame = ctk.CTkFrame(self.frame_text,fg_color='transparent',corner_radius=20)
                 self.lower_frame.grid(row=1,column=0,pady=2,padx=7,sticky='nswe')
-
                 self.lower_frame.grid_rowconfigure(0, weight=0)
-
                 self.lower_frame.grid_columnconfigure(0, weight=0)
-
                 self.lower_frame.grid_columnconfigure(1, weight=1)
 
+                #ngambil waktu sekarang
                 timeNow = datetime.datetime.now()
                 hour = timeNow.hour
                 AM_PM = ' AM'
@@ -151,16 +152,18 @@ class App(ctk.CTk):
                     minute='0'+minute
                 timeNowStr = hour + ':'+ minute + AM_PM
 
+                #tampilan waktu dibawah chat
                 self.lbl_time = ctk.CTkLabel(self.lower_frame,text=timeNowStr,font=('Helvetica',11))
                 self.lbl_time.grid(row=0,column=1,sticky='w',padx=5)
 
+                #tampilan seen atau engga
                 self.lbl_seen = ctk.CTkLabel(self.lower_frame,text='.',text_color='red')
                 self.lbl_seen.grid(row=0,column=0)
 
                 self.list_labels_info[self.index_chat][0].configure(text=ent_user)
                 self.list_labels_info[self.index_chat][1].configure(text=timeNowStr)
 
-                self.list_chat[self.index_chat].append({'M':ent_user,'R':False,'seen':False,'time':timeNowStr})
+                self.list_chat[self.index_chat].append({'M':ent_user,'seen':False,'time':timeNowStr})
 
             else:
                 pass #mau dibuat gambar nanti
@@ -180,23 +183,26 @@ class App(ctk.CTk):
 
     #Fungsi untuk mengambil data pesan
     def get_chats_Net(self):
+        #ini buat pengguna nya
         self.my_name = "Nohiro"
+        #ini orang yang mau di chat, timen
         self.list_persons=[
             {
                 "name":'Richky Sachet',
-                'time':'8:26 PM'
+                'time':'8:26 PM' #waktu palsu ini bang
             },
             {
                 "name":'Widi Stang Seher',
-                'time':'02:00 AM'
+                'time':'02:00 AM' #waktu palsu, mungkin nanti bisa diambil dari chat terbaru
             }
         ]
+        # nanti abang ubah-ubah aja ini bang, nanti biar setiap kirim chat disimpan disini, pas buka appnya muncul lagi chatnya
         self.list_chat=[
             [{'H':'Bang, aku sebenarnya suka sama elisa, tapi jgn ksih tau sp2','R':False, 'time':'8:26 PM','seen':True},
              {'M':'Aman bangg','R':False, 'time':'8:27 PM','seen':True},
              {'H':'pas matkul jarkom, aku mau confess ke dia','R':False, 'time':'8:29 PM','seen':True},
              {'M':'anjayy goodluck bang','R':False, 'time':'8:29 PM','seen':True},
-             {'H':r'C:\Users\AU\Desktop\2024-5-28-15-10-45.wav','R':'True', 'time':'8:35 PM','seen':True}],
+             {'H':'tutor dapat cewe dong bang','R':False, 'time':'8:35 PM','seen':True}],
 
             [{'H':'Bang tolong aku diculik ambatron','R':False, 'time':'2:21 AM','seen':True},
              {'M':'dimana bang? biar ku telpon rusdi','R':False, 'time':'2:22 AM','seen':True},
@@ -277,6 +283,7 @@ class App(ctk.CTk):
             self.list_frames=[]
             self.list_rec={}
 
+            #perulangan untuk settingan chatnya, kalau kita yg stick nya e, kalau lawan stick w
             for i in range(len(list_chat)):
                 stick='e'
                 sticky_time='w'
@@ -290,29 +297,32 @@ class App(ctk.CTk):
                     ch = self.list_persons[index]['name'][0]
                     color='#25D366'
                 
+                # frame chat nya
                 self.bsk_frame =ctk.CTkFrame(self.chatFrame,fg_color='transparent')
                 self.bsk_frame.grid(row=i,column=0,sticky=stick)
 
                 self.bsk_frame.grid_columnconfigure((0,1), weight=0)
                 self.bsk_frame.grid_rowconfigure(0, weight=1)
 
+                #frame foto profil
                 self.ch = ctk.CTkLabel(self.bsk_frame, text=ch,font=('Helvetica',20,'bold'),height=30,width=30,fg_color=color,text_color='white',corner_radius=5)
                 self.ch.grid(row=0,column=row_pos,padx=10,pady=10)
 
+                #frame text
                 self.frame_text = ctk.CTkFrame(self.bsk_frame,corner_radius=15,height=30,fg_color='white')
                 self.frame_text.grid(row=0,column=1-row_pos)
 
                 self.frame_text.grid_rowconfigure((0,1), weight=0)
                 self.frame_text.grid_columnconfigure(0, weight=0)
 
-                span=3
+                span=3 # gatau jir, ini bekas kodingan yang khusus record kayanya
                 if list_chat[i]['R']==False: #ini masih'R' record, nanti mau diubah jadi gambar
                     self.lbl_text=ctk.CTkLabel(self.frame_text, text=list(list_chat[i].values())[0],font=('Helvetica',14)) #settingan pesan yang tersimpan
                     self.lbl_text.grid(row=0,column=0,padx=10,pady=5,sticky='w')
                     span=1
                 else:
                     pass
-                
+                # kalau lower berarti chat bawah, maksudnya dibawah teks itu ada frame lagi, frame waktu sama 'seen' nya
                 self.lower_frame = ctk.CTkFrame(self.frame_text,fg_color='transparent',corner_radius=20)
                 self.lower_frame.grid(row=1,column=0,columnspan=span,pady=2,padx=7,sticky='nswe')
 
@@ -322,9 +332,11 @@ class App(ctk.CTk):
 
                 self.lower_frame.grid_columnconfigure(1, weight=1)
 
+                #waktu
                 self.lbl_time = ctk.CTkLabel(self.lower_frame,text=self.list_chat[self.index_chat][i]['time'],font=('Helvetica',11),text_color='gray')
                 self.lbl_time.grid(row=0,column=1,sticky=sticky_time,padx=5)
 
+                #jika chat belum dibaca, warna seen (dibuat titik disamping waktu) warna merah, kalau udah dilihat warna hijau
                 if list(list_chat[i].keys())[0]=='M':
                     color_seen='red'
                     if list_chat[1]['seen']:
