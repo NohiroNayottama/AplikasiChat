@@ -1,11 +1,11 @@
 import customtkinter as ctk
-from tkinter import END
-
-from threading import Thread
+from tkinter import END, LEFT
 
 import time # untuk waktu
 
 import datetime #untuk waktu atau hari
+
+import json
 
 class App(ctk.CTk):
     def __init__(self):
@@ -21,15 +21,15 @@ class App(ctk.CTk):
         self.list_frames=[]
         self.list_labels_info=[]
 
-        #variabel nama dan index chat-1
-        self.my_name=''
+        #index chat-1
         self.index_chat=-1
 
         #index mode
         self.index_mode=0
         ## 0 --> text
         ## 1 --> rrencananya mau gambar
-
+        self.my_name = "Nohiro Hazel"
+        self.my_ip = "192.168.100.1"
         #fungsi mengambil chat
         self.get_chats_Net()
 
@@ -114,7 +114,7 @@ class App(ctk.CTk):
         if self.index_mode==0: #jika mode chat/text
             if ent_user!='':
                 self.bsk_frame =ctk.CTkFrame(self.chatFrame,fg_color='transparent')
-                self.bsk_frame.grid(row=len(self.list_frames),column=0,sticky='e')
+                self.bsk_frame.grid(row=len(self.list_frames),column=0,sticky='e',ipady=5)
 
                 self.bsk_frame.grid_columnconfigure((0,1), weight=0)
                 self.bsk_frame.grid_rowconfigure(0, weight=1)
@@ -125,13 +125,13 @@ class App(ctk.CTk):
                 self.frame_text = ctk.CTkFrame(self.bsk_frame,corner_radius=15,height=30,fg_color='white')
                 self.frame_text.grid(row=0,column=0)
 
-                self.lbl_text=ctk.CTkLabel(self.frame_text, text=ent_user,font=('Helvetica',14)) #settingan kirim pesan
+                self.lbl_text=ctk.CTkLabel(self.frame_text, text=ent_user,font=('Helvetica',14),wraplength=200,justify=LEFT) #settingan kirim pesan
                 self.lbl_text.grid(row=0,column=0,padx=10,pady=5,sticky='w')
 
                 self.list_frames.append(self.bsk_frame)
 
                 self.lower_frame = ctk.CTkFrame(self.frame_text,fg_color='transparent',corner_radius=20)
-                self.lower_frame.grid(row=1,column=0,pady=2,padx=7,sticky='nswe')
+                self.lower_frame.grid(row=1,column=0,columnspan=3,pady=2,padx=7,sticky='nswe')
                 self.lower_frame.grid_rowconfigure(0, weight=0)
                 self.lower_frame.grid_columnconfigure(0, weight=0)
                 self.lower_frame.grid_columnconfigure(1, weight=1)
@@ -153,17 +153,17 @@ class App(ctk.CTk):
                 timeNowStr = hour + ':'+ minute + AM_PM
 
                 #tampilan waktu dibawah chat
-                self.lbl_time = ctk.CTkLabel(self.lower_frame,text=timeNowStr,font=('Helvetica',11))
+                self.lbl_time = ctk.CTkLabel(self.lower_frame,text=timeNowStr,font=('Helvetica',11),text_color='gray')
                 self.lbl_time.grid(row=0,column=1,sticky='w',padx=5)
 
                 #tampilan seen atau engga
                 self.lbl_seen = ctk.CTkLabel(self.lower_frame,text='.',text_color='red')
                 self.lbl_seen.grid(row=0,column=0)
 
-                self.list_labels_info[self.index_chat][0].configure(text=ent_user)
+                self.list_labels_info[self.index_chat][0].configure(text=ent_user[0:20]+('...' if len(ent_user)>20 else ''))
                 self.list_labels_info[self.index_chat][1].configure(text=timeNowStr)
 
-                self.list_chat[self.index_chat].append({'M':ent_user,'seen':False,'time':timeNowStr})
+                self.list_chat[self.index_chat].append({'M':ent_user,'R':False,'seen':False,'time':timeNowStr})
 
             else:
                 pass #mau dibuat gambar nanti
@@ -183,33 +183,25 @@ class App(ctk.CTk):
 
     #Fungsi untuk mengambil data pesan
     def get_chats_Net(self):
-        #ini buat pengguna nya
-        self.my_name = "Nohiro"
-        #ini orang yang mau di chat, timen
-        self.list_persons=[
-            {
-                "name":'Richky Sachet',
-                'time':'8:26 PM' #waktu palsu ini bang
-            },
-            {
-                "name":'Widi Stang Seher',
-                'time':'02:00 AM' #waktu palsu, mungkin nanti bisa diambil dari chat terbaru
-            }
-        ]
-        # nanti abang ubah-ubah aja ini bang, nanti biar setiap kirim chat disimpan disini, pas buka appnya muncul lagi chatnya
-        self.list_chat=[
-            [{'H':'Bang, aku sebenarnya suka sama elisa, tapi jgn ksih tau sp2','R':False, 'time':'8:26 PM','seen':True},
-             {'M':'Aman bangg','R':False, 'time':'8:27 PM','seen':True},
-             {'H':'pas matkul jarkom, aku mau confess ke dia','R':False, 'time':'8:29 PM','seen':True},
-             {'M':'anjayy goodluck bang','R':False, 'time':'8:29 PM','seen':True},
-             {'H':'tutor dapat cewe dong bang','R':False, 'time':'8:35 PM','seen':True}],
+        direct=f'FolderChat\\{self.my_ip}'
+        f = open(direct+'\\LastSent.json')
 
-            [{'H':'Bang tolong aku diculik ambatron','R':False, 'time':'2:21 AM','seen':True},
-             {'M':'dimana bang? biar ku telpon rusdi','R':False, 'time':'2:22 AM','seen':True},
-             {'H':'di TA 10.5 bang, cepat bang tolong aku','R':False, 'time':'2:26 AM','seen':True},
-             {'M':'iya iya sabar bang, rusdi lagi otw','R':False, 'time':'2:31 AM','seen':True}]
-        ] # 'R':False disini berarti ini bukan record(rekaman suara), ini dibuat gini biar bisa kirim pesan suara
+        data = json.load(f)
+        f.close()
 
+        self.list_persons=list(data.values())
+        self.ips = list(data.keys())
+
+        self.list_chat=[]
+
+        for ip in self.ips:
+            direct_chat = direct+f'\\{ip}\\Chat.json'
+            f = open(direct_chat)
+            data = json.load(f)
+            f.close()
+            self.list_chat.append(data['chat'])
+
+        
     #Fungsi untuk menampilkan orang yang ingin dichat (bagian kiri)
     def load_chats(self,ListPersons):
         for i in range(len(ListPersons)):
@@ -245,7 +237,7 @@ class App(ctk.CTk):
             self.lbl_name.grid(row=1,column=0,sticky='w')
             self.lbl_name.bind('<Button-1>',lambda e,a=i,chat=self.list_chat[i] :self.init_chat(e,a,chat))
 
-            self.lbl_Info=ctk.CTkLabel(self.frameInfo, text=info,font=('Helvetica',14),height=5)
+            self.lbl_Info=ctk.CTkLabel(self.frameInfo, text=info[0:30]+('...'if len(info)>30 else ''),font=('Helvetica',14),height=5)
             self.lbl_Info.grid(row=2,column=0,sticky='w')
             self.lbl_Info.bind('<Button-1>',lambda e,a=i,chat=self.list_chat[i] :self.init_chat(e,a,chat))
 
@@ -264,7 +256,7 @@ class App(ctk.CTk):
             self.ent = ctk.CTkEntry(self.footerFrame, placeholder_text='Type a message')
             self.ent.grid(row=0,column=0,sticky='nswe',padx=5,pady=10)
 
-            self.bt_send = ctk.CTkButton(self.footerFrame, text='Send/Rec', font=('Helvetica',18),fg_color="#25D366",command=self.bt_send_com,hover_color='#1DA851')
+            self.bt_send = ctk.CTkButton(self.footerFrame, text='Kirim', font=('Helvetica',18),fg_color="#25D366",command=self.bt_send_com,hover_color='#1DA851')
             self.bt_send.grid(row=0,column=1,padx=5,pady=10)
 
 
@@ -299,7 +291,7 @@ class App(ctk.CTk):
                 
                 # frame chat nya
                 self.bsk_frame =ctk.CTkFrame(self.chatFrame,fg_color='transparent')
-                self.bsk_frame.grid(row=i,column=0,sticky=stick)
+                self.bsk_frame.grid(row=i,column=0,sticky=stick,ipady=5)
 
                 self.bsk_frame.grid_columnconfigure((0,1), weight=0)
                 self.bsk_frame.grid_rowconfigure(0, weight=1)
@@ -317,7 +309,7 @@ class App(ctk.CTk):
 
                 span=3 # gatau jir, ini bekas kodingan yang khusus record kayanya
                 if list_chat[i]['R']==False: #ini masih'R' record, nanti mau diubah jadi gambar
-                    self.lbl_text=ctk.CTkLabel(self.frame_text, text=list(list_chat[i].values())[0],font=('Helvetica',14)) #settingan pesan yang tersimpan
+                    self.lbl_text=ctk.CTkLabel(self.frame_text, text=list(list_chat[i].values())[0],font=('Helvetica',14),wraplength=200,justify=LEFT) #settingan pesan yang tersimpan
                     self.lbl_text.grid(row=0,column=0,padx=10,pady=5,sticky='w')
                     span=1
                 else:
