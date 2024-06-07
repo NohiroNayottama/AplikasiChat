@@ -181,23 +181,23 @@ class App(ctk.CTk):
         direct=f'FolderChat\\{self.my_ip}'
         f = open(direct+'\\LastSent.json')
 
-        data = json.load(f)
-        print(data)
+        dataterakhir = json.load(f)
+        print(dataterakhir)
         print('#################################')
         f.close()
 
-        self.list_persons=list(data.values())
-        self.ips = list(data.keys())
+        self.list_persons=list(dataterakhir.values())
+        self.ips = list(dataterakhir.keys())
 
         self.list_chat=[]
 
         for ip in self.ips:
             direct_chat = direct+f'\\{ip}\\Chat.json'
             f = open(direct_chat)
-            data = json.load(f)
-            print(data)
+            datachat = json.load(f)
+            print(datachat)
             f.close()
-            self.list_chat.append(data['chat'])
+            self.list_chat.append(datachat['chat'])
 
         
     #Fungsi untuk menampilkan orang yang ingin dichat (bagian kiri)
