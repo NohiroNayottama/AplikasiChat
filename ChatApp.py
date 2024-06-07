@@ -165,11 +165,6 @@ class App(ctk.CTk):
 
                 self.list_chat[self.index_chat].append({'M':ent_user,'R':False,'seen':False,'time':timeNowStr})
 
-            else:
-                pass #mau dibuat gambar nanti
-        elif self.index_mode==1: #jika mode gambar
-            #stop
-            pass #mau dibuat gambar nanti
 
     def time_format(self,sec): # jika 70
         minutes = str(int(sec/60)) #jadi 01
