@@ -157,7 +157,7 @@ class App(ctk.CTk):
                 self.lbl_time.grid(row=0,column=1,sticky='w',padx=5)
 
                 #tampilan seen atau engga
-                self.lbl_seen = ctk.CTkLabel(self.lower_frame,text='.',text_color='red')
+                self.lbl_seen = ctk.CTkLabel(self.lower_frame,text='✔',text_color='gray')
                 self.lbl_seen.grid(row=0,column=0)
 
                 self.list_labels_info[self.index_chat][0].configure(text=ent_user[0:20]+('...' if len(ent_user)>20 else ''))
@@ -199,15 +199,16 @@ class App(ctk.CTk):
         for ip in self.ips:
             direct_chat = direct+f'\\{ip}\\Chat.json'
             f = open(direct_chat)
-            datachat = json.load(f)
-            print(datachat)
+            self.datachat = json.load(f)
+            print(self.datachat)
             f.close()
-            self.list_chat.append(datachat['chat'])
+            self.list_chat.append(self.datachat['chat'])
 
     def update_chat_data(self):
         direct_chat = f'FolderChat/{self.my_ip}/{self.ips[self.index_chat]}/Chat.json'
         with open(direct_chat, 'w') as f:
             json.dump({"chat": self.list_chat[self.index_chat]}, f)
+    
 
         
     #Fungsi untuk menampilkan orang yang ingin dichat (bagian kiri)
@@ -248,6 +249,9 @@ class App(ctk.CTk):
             self.lbl_Info.bind('<Button-1>',lambda e,a=i,chat=self.list_chat[i] :self.init_chat(e,a,chat))
 
             self.lbl_time=ctk.CTkLabel(self.frameInfo, text=ListPersons[i]['time'],font=('Helvetica',14),height=5)
+            print('DATACHAT :',self.datachat)
+            print('ndex:', self.index_chat)
+
             self.lbl_time.grid(row=3,column=0,sticky='w')
             self.lbl_time.bind('<Button-1>',lambda e,a=i,chat=self.list_chat[i] :self.init_chat(e,a,chat))
 
@@ -339,7 +343,7 @@ class App(ctk.CTk):
                     color_seen='red'
                     if list_chat[1]['seen']:
                         color_seen = '#25D366'
-                    self.lbl_seen = ctk.CTkLabel(self.lower_frame,text='.',text_color=color_seen)
+                    self.lbl_seen = ctk.CTkLabel(self.lower_frame,text='✔',text_color=color_seen)
                     self.lbl_seen.grid(row=0,column=0)
 
                 self.list_frames.append(self.bsk_frame)
