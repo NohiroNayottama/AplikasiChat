@@ -27,7 +27,7 @@ class App(ctk.CTk):
         #index mode
         self.index_mode=0
         ## 0 --> text
-        ## 1 --> rrencananya mau gambar
+        ## 1 --> rencananya mau gambar
         self.my_name = "Nohiro Hazel"
         self.my_ip = "192.168.100.1"
         #fungsi mengambil chat
@@ -163,7 +163,7 @@ class App(ctk.CTk):
                 self.list_labels_info[self.index_chat][0].configure(text=ent_user[0:20]+('...' if len(ent_user)>20 else ''))
                 self.list_labels_info[self.index_chat][1].configure(text=timeNowStr)
 
-                self.list_chat[self.index_chat].append({'M':ent_user,'R':False,'seen':False,'time':timeNowStr})
+                self.list_chat[self.index_chat].append({'M':ent_user,'seen':False,'time':timeNowStr})
 
 
     def time_format(self,sec): # jika 70
@@ -182,6 +182,8 @@ class App(ctk.CTk):
         f = open(direct+'\\LastSent.json')
 
         data = json.load(f)
+        print(data)
+        print('#################################')
         f.close()
 
         self.list_persons=list(data.values())
@@ -193,6 +195,7 @@ class App(ctk.CTk):
             direct_chat = direct+f'\\{ip}\\Chat.json'
             f = open(direct_chat)
             data = json.load(f)
+            print(data)
             f.close()
             self.list_chat.append(data['chat'])
 
@@ -201,8 +204,6 @@ class App(ctk.CTk):
     def load_chats(self,ListPersons):
         for i in range(len(ListPersons)):
             info = list(self.list_chat[i][-1].values())[0]
-            if list(self.list_chat[i][-1].values())[1]:
-                info='Gambar' #mau dibuat gambar
 
             self.basicFrame = ctk.CTkFrame(self.leftFrame,fg_color='transparent',height=100,corner_radius=0)
             self.basicFrame.grid(row=i,column=0,sticky='nswe',pady=5)
@@ -303,7 +304,7 @@ class App(ctk.CTk):
                 self.frame_text.grid_columnconfigure(0, weight=0)
 
                 span=3 # gatau jir, ini bekas kodingan yang khusus record kayanya
-                if list_chat[i]['R']==False: #ini masih'R' record, nanti mau diubah jadi gambar
+                if list_chat[i]:
                     self.lbl_text=ctk.CTkLabel(self.frame_text, text=list(list_chat[i].values())[0],font=('Helvetica',14),wraplength=200,justify=LEFT) #settingan pesan yang tersimpan
                     self.lbl_text.grid(row=0,column=0,padx=10,pady=5,sticky='w')
                     span=1
