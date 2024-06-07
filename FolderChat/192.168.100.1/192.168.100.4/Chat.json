@@ -2,26 +2,22 @@
     "chat": [
         {
             "H": "bang mabar yok",
-            "R": false,
             "time": "2:21 AM",
             "seen": true
         },
         {
             "M": "mabar apa?",
-            "R": false,
             "time": "2:22 AM",
             "seen": true
         },
         {
             "H": "ml yok",
-            "R": false,
             "time": "2:26 AM",
             "seen": true
         },
         {
             "M": "ayok gas",
-            "R": false,
-            "time": "2:31 AM",
+            "time": "2:30 AM",
             "seen": true
         }
     ]
