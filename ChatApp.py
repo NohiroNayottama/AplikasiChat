@@ -164,6 +164,7 @@ class App(ctk.CTk):
                 self.list_labels_info[self.index_chat][1].configure(text=timeNowStr)
 
                 self.list_chat[self.index_chat].append({'M':ent_user,'seen':False,'time':timeNowStr})
+                self.update_chat_data()
 
 
     def time_format(self,sec): # jika 70
@@ -182,12 +183,16 @@ class App(ctk.CTk):
         f = open(direct+'\\LastSent.json')
 
         dataterakhir = json.load(f)
-        print(dataterakhir)
+        print("Data Terakhir:", dataterakhir)  # Debugging
         print('#################################')
         f.close()
 
         self.list_persons=list(dataterakhir.values())
         self.ips = list(dataterakhir.keys())
+
+        print("List Persons:", self.list_persons)  # Debugging
+        print("index chat:", self.index_chat)
+        print("IPs:", self.ips)  # Debugging
 
         self.list_chat=[]
 
@@ -198,6 +203,11 @@ class App(ctk.CTk):
             print(datachat)
             f.close()
             self.list_chat.append(datachat['chat'])
+
+    def update_chat_data(self):
+        direct_chat = f'FolderChat/{self.my_ip}/{self.ips[self.index_chat]}/Chat.json'
+        with open(direct_chat, 'w') as f:
+            json.dump({"chat": self.list_chat[self.index_chat]}, f)
 
         
     #Fungsi untuk menampilkan orang yang ingin dichat (bagian kiri)
